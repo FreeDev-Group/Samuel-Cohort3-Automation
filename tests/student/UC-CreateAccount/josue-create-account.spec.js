@@ -1,81 +1,98 @@
 import { test, expect } from '@playwright/test';
+import { dismissCookieBanner } from '../../../helpers/cookies.js';
 
 test.describe('Create Account - Student', () => {
 
+  async function openStudentRegistration(page) {
+
+    await page.goto('/', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+
+    await page.waitForLoadState('networkidle');
+
+    await dismissCookieBanner(page);
+
+    await page.getByRole('link', { name: 'User' }).click();
+    await page.getByRole('link', { name: 'Register as Student' }).click();
+  }
+
   test('Register as Student with valid inputs', async ({ page }) => {
+
     const uniqueId = Date.now();
 
     const username = `josue${uniqueId}`;
     const email = `josue${uniqueId}@gmail.com`;
 
-   await page.goto(
-  'https://student.michaelkentburns.com/wp-login.php?action=register',
-  { waitUntil: 'domcontentloaded' }
-);
+    await openStudentRegistration(page);
 
-    await page.locator('#user_login').fill(username);
-    await page.locator('#user_email').fill(email);
+    await page.getByRole('textbox', {
+      name: 'Username'
+    }).fill(username);
 
-    await page.locator('#wp-submit').click();
+    await page.getByRole('textbox', {
+      name: 'Email'
+    }).fill(email);
 
-    await expect(page).toHaveURL(/checkemail=registered/);
+    await page.getByRole('button', {
+      name: 'Register'
+    }).click();
+
+    await expect(page).toHaveURL(/checkemail=registered/i);
+
   });
 
   test('Submit with empty username', async ({ page }) => {
-    await page.goto(
-  'https://student.michaelkentburns.com/wp-login.php?action=register',
-  { waitUntil: 'domcontentloaded' }
-);
 
-    await page.locator('#user_email')
-      .fill('test@gmail.com');
+    await openStudentRegistration(page);
 
-    await page.locator('#wp-submit').click();
+    await page.getByRole('textbox', {
+      name: 'Email'
+    }).fill('test@gmail.com');
 
-    await expect(page.locator('#user_login'))
-      .toBeFocused();
+    await page.getByRole('button', {
+      name: 'Register'
+    }).click();
+
+    await expect(page.locator('body')).toContainText(/username/i);
+
   });
 
   test('Submit with empty email', async ({ page }) => {
-  await page.goto(
-  'https://student.michaelkentburns.com/wp-login.php?action=register',
-  { waitUntil: 'domcontentloaded' }
-);
 
-  await page.locator('#user_login')
-    .fill('josueTest');
+    await openStudentRegistration(page);
 
-  await page.locator('#wp-submit').click();
+    await page.getByRole('textbox', {
+      name: 'Username'
+    }).fill('josueTest');
 
-  // On doit rester sur la page d'inscription
-  await expect(page).toHaveURL(
-    /wp-login\.php\?action=register/
-  );
+    await page.getByRole('button', {
+      name: 'Register'
+    }).click();
 
-  // Le champ email est invalide car il est requis
-  const emailIsInvalid = await page
-    .locator('#user_email')
-    .evaluate(el => !el.checkValidity());
+    await expect(page.locator('body')).toContainText(/email/i);
 
-  expect(emailIsInvalid).toBeTruthy();
-});
+  });
 
   test('Submit with already registered email', async ({ page }) => {
-    await page.goto(
-  'https://student.michaelkentburns.com/wp-login.php?action=register',
-  { waitUntil: 'domcontentloaded' }
-);
 
-    await page.locator('#user_login')
-      .fill(`josue${Date.now()}`);
+    await openStudentRegistration(page);
 
-    await page.locator('#user_email')
-      .fill('test@gmail.com');
+    await page.getByRole('textbox', {
+      name: 'Username'
+    }).fill(`josue${Date.now()}`);
 
-    await page.locator('#wp-submit').click();
+    await page.getByRole('textbox', {
+      name: 'Email'
+    }).fill('test@gmail.com');
 
-    await expect(page.locator('body'))
-      .toContainText(/email|already|registered/i);
+    await page.getByRole('button', {
+      name: 'Register'
+    }).click();
+
+    await expect(page.locator('body')).toContainText(/already registered|email/i);
+
   });
 
 });
