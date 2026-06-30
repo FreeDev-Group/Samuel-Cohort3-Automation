@@ -55,8 +55,9 @@ test.describe('Create Account - Student', () => {
       name: 'Register'
     }).click();
 
-    await expect(page.locator('body')).toContainText(/username/i);
-
+    await expect(page.locator('body')).toContainText(
+  'Error: Please enter a username.'
+);
   });
 
   test('Submit with empty email', async ({ page }) => {
@@ -71,8 +72,9 @@ test.describe('Create Account - Student', () => {
       name: 'Register'
     }).click();
 
-    await expect(page.locator('body')).toContainText(/email/i);
-
+    await expect(page.locator('body')).toContainText(
+  'Error: Please enter your email address.'
+);
   });
 
   test('Submit with already registered email', async ({ page }) => {
@@ -91,7 +93,9 @@ test.describe('Create Account - Student', () => {
       name: 'Register'
     }).click();
 
-    await expect(page.locator('body')).toContainText(/already registered|email/i);
+    await expect(page.locator('body')).toContainText(
+  'Error: This email is already registered.'
+);
 
   });
 
