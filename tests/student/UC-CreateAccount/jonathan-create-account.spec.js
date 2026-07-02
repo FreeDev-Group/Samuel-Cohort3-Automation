@@ -1,28 +1,32 @@
 import { test, expect } from '@playwright/test';
+import { dismissCookieBanner } from '../../../helpers/cookies.js';
 
-async function dismissCookieBanner(page) {
-  const rejectButton = page.getByRole('button', { name: 'Reject All' });
+const baseUrl = 'https://student.michaelkentburns.com/';
 
-  if (await rejectButton.isVisible().catch(() => false)) {
-    await rejectButton.click();
-  }
-}
-
-test('Register as Student with valid inputs', async ({ page }) => {
-  const timestamp = Date.now();
-
-  const username = `jonathan${timestamp}`;
-  const email = `jonathan${timestamp}@test.com`;
-
-  await page.goto('https://student.michaelkentburns.com/');
-
+async function openStudentRegistration(page) {
+  await page.goto(baseUrl);
   await dismissCookieBanner(page);
 
   await page.getByRole('link', { name: 'User' }).click();
   await page.getByRole('link', { name: 'Register as Student' }).click();
+}
 
-  await page.getByRole('textbox', { name: 'Username' }).fill(username);
-  await page.getByRole('textbox', { name: 'Email' }).fill(email);
+function createStudentData() {
+  const timestamp = Date.now();
+
+  return {
+    username: `jonathan${timestamp}`,
+    email: `jonathan${timestamp}@test.com`,
+  };
+}
+
+test('Register as Student with valid inputs', async ({ page }) => {
+  const student = createStudentData();
+
+  await openStudentRegistration(page);
+
+  await page.getByRole('textbox', { name: 'Username' }).fill(student.username);
+  await page.getByRole('textbox', { name: 'Email' }).fill(student.email);
 
   await page.getByRole('button', { name: 'Register' }).click();
 
@@ -32,15 +36,11 @@ test('Register as Student with valid inputs', async ({ page }) => {
 });
 
 test('Submit with empty username', async ({ page }) => {
-  await page.goto('https://student.michaelkentburns.com/');
+  const student = createStudentData();
 
-  await dismissCookieBanner(page);
+  await openStudentRegistration(page);
 
-  await page.getByRole('link', { name: 'User' }).click();
-  await page.getByRole('link', { name: 'Register as Student' }).click();
-
-  await page.getByRole('textbox', { name: 'Email' })
-    .fill('existing@test.com');
+  await page.getByRole('textbox', { name: 'Email' }).fill(student.email);
 
   await page.getByRole('button', { name: 'Register' }).click();
 
@@ -50,17 +50,11 @@ test('Submit with empty username', async ({ page }) => {
 });
 
 test('Submit with empty email', async ({ page }) => {
-  await page.goto('https://student.michaelkentburns.com/');
+  const student = createStudentData();
 
-  await dismissCookieBanner(page);
+  await openStudentRegistration(page);
 
-  const username = `jonathan${Date.now()}`;
-
-  await page.getByRole('link', { name: 'User' }).click();
-  await page.getByRole('link', { name: 'Register as Student' }).click();
-
-  await page.getByRole('textbox', { name: 'Username' })
-    .fill(username);
+  await page.getByRole('textbox', { name: 'Username' }).fill(student.username);
 
   await page.getByRole('button', { name: 'Register' }).click();
 
@@ -70,21 +64,23 @@ test('Submit with empty email', async ({ page }) => {
 });
 
 test('Submit with already registered email', async ({ page }) => {
-  await page.goto('https://student.michaelkentburns.com/');
+  const firstStudent = createStudentData();
+  const secondStudent = createStudentData();
 
-  await dismissCookieBanner(page);
+  await openStudentRegistration(page);
 
-  const username = `jonathan${Date.now()}`;
+  await page.getByRole('textbox', { name: 'Username' }).fill(firstStudent.username);
+  await page.getByRole('textbox', { name: 'Email' }).fill(firstStudent.email);
+  await page.getByRole('button', { name: 'Register' }).click();
 
-  await page.getByRole('link', { name: 'User' }).click();
-  await page.getByRole('link', { name: 'Register as Student' }).click();
+  await expect(page.locator('body')).toContainText(
+    'Registration complete. Please check your email, then visit the login page.'
+  );
 
-  await page.getByRole('textbox', { name: 'Username' })
-    .fill(username);
+  await openStudentRegistration(page);
 
-  await page.getByRole('textbox', { name: 'Email' })
-    .fill('mbusaabigael@gmail.com');
-
+  await page.getByRole('textbox', { name: 'Username' }).fill(secondStudent.username);
+  await page.getByRole('textbox', { name: 'Email' }).fill(firstStudent.email);
   await page.getByRole('button', { name: 'Register' }).click();
 
   await expect(page.locator('body')).toContainText(
