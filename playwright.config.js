@@ -29,10 +29,10 @@ export default defineConfig({
   /* Base URL to use in actions like `await page.goto('')`. */
   baseURL: 'https://student.michaelkentburns.com/',
 
-  /* Temps maximum pour charger une page */
+  /* Maximum time to load a page */
   navigationTimeout: 60000,
 
-  /* Temps maximum pour une action (click, fill, etc.) */
+  /* Maximum time for an action (click, fill, etc.) */
   actionTimeout: 30000,
 
   /* Collect trace when retrying the failed test. */
