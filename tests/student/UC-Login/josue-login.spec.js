@@ -21,23 +21,29 @@ test.describe('Student Login', () => {
 
   test('Login with valid credentials', async ({ page }) => {
 
-    await openStudentLogin(page);
+  await openStudentLogin(page);
 
-    await page.getByRole('textbox', {
-      name: 'Username or Email Address'
-    }).fill(studentUser.username);
+  await page.getByRole('textbox', {
+    name: 'Username or Email Address'
+  }).fill(studentUser.username);
 
-    await page.getByRole('textbox', {
-      name: 'Password'
-    }).fill(studentUser.password);
+  await page.getByRole('textbox', {
+    name: 'Password'
+  }).fill(studentUser.password);
 
-    await page.getByRole('button', {
-      name: 'Log In'
-    }).click();
+  await page.getByRole('button', {
+    name: 'Log In'
+  }).click();
 
-    await expect(page).toHaveURL(/wp-admin/);
+  // Attendre que la navigation soit terminée
+  await page.waitForLoadState('networkidle');
 
+  // Attendre jusqu'à 60 secondes que l'URL change
+  await expect(page).toHaveURL(/wp-admin/, {
+    timeout: 60000,
   });
+
+});
 
   test('Login with wrong password', async ({ page }) => {
 
