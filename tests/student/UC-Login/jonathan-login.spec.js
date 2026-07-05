@@ -3,12 +3,20 @@ import { studentUser } from '../../../fixtures/test-users.js';
 import { dismissCookieBanner } from '../../../helpers/cookies.js';
 
 async function openStudentLogin(page) {
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
 
   await dismissCookieBanner(page);
 
-  await page.getByRole('link', { name: 'User' }).click();
-  await page.getByRole('link', { name: 'Login' }).click();
+  await page.getByRole('link', { name: 'User', exact: true }).waitFor({
+    state: 'visible',
+    timeout: 60000,
+  });
+
+  await page.getByRole('link', { name: 'User', exact: true }).click();
+
+  await page.getByRole('link', { name: 'Login', exact: true }).click();
+
+  await expect(page.getByRole('textbox', { name: 'Username' })).toBeVisible();
 }
 
 async function loginAsStudent(page, username, password) {
