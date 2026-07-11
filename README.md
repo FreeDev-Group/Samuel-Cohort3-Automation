@@ -80,7 +80,7 @@ You can run the tests in several ways:
 
 ## 📂 Project Structure
 
-Tests are organized first by **user role**, then by their respective **Use Cases** defined in the main project documentation. Each mentee writes their spec file inside the relevant use case folder.  
+Tests are organized first by **mentee**, then by **user role**, then by their respective **Use Cases** defined in the main project documentation. Each mentee writes their spec file inside their own role/use-case folder.  
 Shared logic lives in `helpers/` and `fixtures/`.
 
 ```
@@ -89,15 +89,28 @@ Shared logic lives in `helpers/` and `fixtures/`.
 │   └── workflows/
 │       └── playwright.yml          # CI: runs Chromium tests on PRs touching tests/
 ├── tests/
-│   ├── student/                    # Tests for the Student role
-│   │   ├── UC-Login/               # Student authentication
-│   │   ├── UC-CreateAccount/       # Student registration workflow
-│   │   ├── UC-ProvideFeedback/     # Taking and submitting surveys
-│   │   └── UC-ReviewFeedback/      # Reviewing past submissions
-│   └── instructor/                 # Tests for the Instructor role
-│       ├── UC-Login/               # Instructor authentication
-│       ├── UC-CreateAccount/       # Instructor registration workflow
-│       └── UC-ManageSurveys/       # Survey management (Create/Edit/Delete)
+│   ├── jonathan/
+│   │   ├── student/                    # Tests for the Student role
+│   │   │   ├── UC-Login/               # Student authentication
+│   │   │   │   ├── jonathan-login.spec.js
+│   │   │   │   └── videos/             # .webm recording of the final passing run
+│   │   │   ├── UC-CreateAccount/       # Student registration workflow
+│   │   │   ├── UC-ProvideFeedback/     # Taking and submitting surveys
+│   │   │   └── UC-ReviewFeedback/      # Reviewing past submissions
+│   │   └── instructor/                 # Tests for the Instructor role
+│   │       ├── UC-Login/               # Instructor authentication
+│   │       ├── UC-CreateAccount/       # Instructor registration workflow
+│   │       └── UC-ManageSurveys/       # Survey management (Create/Edit/Delete)
+│   └── josue/
+│       ├── student/
+│       │   ├── UC-Login/
+│       │   ├── UC-CreateAccount/
+│       │   ├── UC-ProvideFeedback/
+│       │   └── UC-ReviewFeedback/
+│       └── instructor/
+│           ├── UC-Login/
+│           ├── UC-CreateAccount/
+│           └── UC-ManageSurveys/
 ├── helpers/                        # Reusable steps shared across specs
 │   ├── cookies.js                  # Dismisses the cookie banner
 │   └── auth.js                     # Logs in as a student
@@ -111,13 +124,13 @@ Shared logic lives in `helpers/` and `fixtures/`.
 
 | Folder | Use Case |
 | --- | --- |
-| `student/UC-Login` | Verifies Student authentication and dashboard access. |
-| `student/UC-CreateAccount` | Validates the Student registration workflow. |
-| `student/UC-ProvideFeedback` | Tests the survey-taking and submission process. |
-| `student/UC-ReviewFeedback` | Validates retrieval of historical survey data. |
-| `instructor/UC-Login` | Verifies Instructor authentication. |
-| `instructor/UC-CreateAccount` | Validates the Instructor registration workflow. |
-| `instructor/UC-ManageSurveys` | Tests Instructor capabilities (Create/Edit/Delete). |
+| `<mentee>/student/UC-Login` | Verifies Student authentication and dashboard access. |
+| `<mentee>/student/UC-CreateAccount` | Validates the Student registration workflow. |
+| `<mentee>/student/UC-ProvideFeedback` | Tests the survey-taking and submission process. |
+| `<mentee>/student/UC-ReviewFeedback` | Validates retrieval of historical survey data. |
+| `<mentee>/instructor/UC-Login` | Verifies Instructor authentication. |
+| `<mentee>/instructor/UC-CreateAccount` | Validates the Instructor registration workflow. |
+| `<mentee>/instructor/UC-ManageSurveys` | Tests Instructor capabilities (Create/Edit/Delete). |
 
 ## 🧩 Helpers & Fixtures
 >[!TIP]
@@ -131,7 +144,7 @@ Example usage in a spec:
 
 ```javascript
 import { test, expect } from '@playwright/test';
-import { loginAsStudent } from '../../../helpers/auth.js';
+import { loginAsStudent } from '../../../../helpers/auth.js';
 
 test('student can open a survey', async ({ page }) => {
   await loginAsStudent(page);
@@ -171,6 +184,7 @@ See `CONTRIBUTING.md` for the full step-by-step guide.
 - Branch names: `yourname/uc-<use-case>`
 - Commit messages reference the issue number
   > Example: `test: automate student login use case #5`
+- Test videos: `<mentee>-<usecase>-<scenario>.webm`, stored in a `videos/` folder next to the spec, final passing run only
 
 ## 👥 Contributors
 

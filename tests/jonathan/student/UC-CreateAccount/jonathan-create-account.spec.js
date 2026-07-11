@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { dismissCookieBanner } from '../../../helpers/cookies.js';
+import { dismissCookieBanner } from '../../../../helpers/cookies.js';
 
 const baseUrl = 'https://student.michaelkentburns.com/';
 
