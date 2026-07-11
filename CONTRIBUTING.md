@@ -49,7 +49,7 @@ git checkout -b jonathan/uc-login
 Create your spec file in the correct folder, for example:
 
 ```
-tests/student/UC-Login/jonathan-login.spec.js
+tests/jonathan/student/UC-Login/jonathan-login.spec.js
 ```
 
 Run it locally until it passes:
@@ -109,6 +109,17 @@ git pull origin main
   `playwright.config.js` is the single source of truth.
 - Always run `npx playwright test` locally **before** opening a PR.
 - Reference the issue number in your commit message and PR description.
+- Videos: copy the .webm videos of your final passing run into the `videos/`
+  folder next to your spec, renamed as `<your-name>-<usecase>-<scenario>.webm`.
+  Never commit intermediate runs.
+
+---
+
+## ☑️ Pre-PR Checklist
+
+- [ ] Tests pass locally with `npx playwright test`
+- [ ] Commit message and PR description reference the issue number
+- [ ] Videos of the final passing run are in the `videos/` folder next to my spec
 
 ---
 

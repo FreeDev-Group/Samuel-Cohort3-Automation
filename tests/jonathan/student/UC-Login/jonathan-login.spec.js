@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { studentUser } from '../../../fixtures/test-users.js';
-import { dismissCookieBanner } from '../../../helpers/cookies.js';
+import { studentUser } from '../../../../fixtures/test-users.js';
+import { dismissCookieBanner } from '../../../../helpers/cookies.js';
 
 async function openStudentLogin(page) {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
