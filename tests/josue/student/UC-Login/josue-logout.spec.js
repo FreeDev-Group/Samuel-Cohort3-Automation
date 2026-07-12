@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsStudent } from '../../../helpers/auth.js';
+import { loginAsStudent } from '../../../../helpers/auth.js';
 
 test.describe('Student Logout', () => {
 
