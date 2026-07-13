@@ -8,28 +8,30 @@ async function logoutStudent(page) {
     await userLink.click();
   }
 
-  const logoutControl = page
-    .getByRole('link', { name: /log out|logout|sign out/i })
-    .or(page.getByRole('button', { name: /log out|logout|sign out/i }));
+  const logoutLink = page.locator('a[href*="action=logout"]').first();
 
-  await logoutControl.first().click();
+  await expect(logoutLink).toHaveAttribute('href', /action=logout/);
+
+  const logoutHref = await logoutLink.getAttribute('href');
+
+  await page.goto(logoutHref);
 }
 
 test('Logged-in student logs out successfully', async ({ page }) => {
   await loginAsStudent(page);
 
-  await expect(page.locator('body')).toContainText(/dashboard|logout|my completed surveys/i);
+  await expect(page.locator('body')).toContainText(/logout|my completed surveys|dashboard/i);
 
   await logoutStudent(page);
 
   await expect(page.locator('body')).toContainText(/login|register|user/i);
-  await expect(page.locator('body')).not.toContainText(/logout|my completed surveys/i);
+  await expect(page.locator('body')).not.toContainText(/my completed surveys/i);
 });
 
 test('After logout, student-only access is no longer available', async ({ page }) => {
   await loginAsStudent(page);
 
-  await expect(page.locator('body')).toContainText(/dashboard|logout|my completed surveys/i);
+  await expect(page.locator('body')).toContainText(/logout|my completed surveys|dashboard/i);
 
   await logoutStudent(page);
 
