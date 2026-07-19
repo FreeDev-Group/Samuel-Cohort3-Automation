@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loginAsStudent } from '../../../../helpers/auth.js';
 
-const NEW_SURVEY_URL = '/survey/wise-test/';
+const NEW_SURVEY_URL = '/survey/personnal-information/';
 const COMPLETED_SURVEY_URL = '/survey/wise-test-2/';
 
 test.describe.serial('Student provide feedback', () => {
@@ -19,10 +19,12 @@ test.describe.serial('Student provide feedback', () => {
 
     await page.goto(surveyUrl);
 
-    await expect(page.locator('body')).toContainText(/survey|question|test|feedback|development|skills/i);
+    await expect(page.locator('body')).toContainText(
+      /survey|question|test|feedback|development|skills|wise|alain/i
+    );
   }
 
-  async function getSubmitButton(page) {
+  function getSubmitButton(page) {
     return page
       .getByRole('button', { name: /submit/i })
       .or(page.locator('input[type="submit"]'))
@@ -31,7 +33,7 @@ test.describe.serial('Student provide feedback', () => {
   }
 
   async function submitSurvey(page) {
-    const submitButton = await getSubmitButton(page);
+    const submitButton = getSubmitButton(page);
 
     await expect(submitButton).toBeVisible();
     await submitButton.scrollIntoViewIfNeeded();
@@ -154,12 +156,25 @@ test.describe.serial('Student provide feedback', () => {
   test('Reopen already completed survey prevents duplicate submission', async ({ page }) => {
     await openSurvey(page, COMPLETED_SURVEY_URL);
 
+    const submitButton = getSubmitButton(page);
+
+    if (await submitButton.isVisible().catch(() => false)) {
+      await answerAvailableQuestions(page);
+      await submitSurvey(page);
+
+      await expect(page.locator('body')).toContainText(
+        /Merci, vos réponses ont bien été enregistrées|thank you|submitted|recorded|success|responses/i
+      );
+    }
+
+    await page.goto(COMPLETED_SURVEY_URL);
+
     await expect(page.locator('body')).toContainText(
       /already responded|already completed|déjà|Merci, vos réponses ont bien été enregistrées|Thank you|responses have been recorded|réponses ont bien été enregistrées/i
     );
 
-    const submitButton = await getSubmitButton(page);
+    const reopenedSubmitButton = getSubmitButton(page);
 
-    await expect(submitButton).not.toBeVisible();
+    await expect(reopenedSubmitButton).not.toBeVisible();
   });
 });
