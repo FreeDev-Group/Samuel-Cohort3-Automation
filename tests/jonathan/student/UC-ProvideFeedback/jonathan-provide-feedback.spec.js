@@ -1,154 +1,165 @@
 import { test, expect } from '@playwright/test';
 import { loginAsStudent } from '../../../../helpers/auth.js';
 
-const NEW_SURVEY_URL = '/survey/alains-survey/';
+const NEW_SURVEY_URL = '/survey/wise-test/';
 const COMPLETED_SURVEY_URL = '/survey/wise-test-2/';
 
-async function openAllSurveys(page) {
-  await loginAsStudent(page);
+test.describe.serial('Student provide feedback', () => {
+  async function openAllSurveys(page) {
+    await loginAsStudent(page);
 
-  await expect(page.getByRole('link', { name: 'All Surveys' })).toBeVisible();
-  await page.getByRole('link', { name: 'All Surveys' }).click();
+    await expect(page.getByRole('link', { name: 'All Surveys' })).toBeVisible();
+    await page.getByRole('link', { name: 'All Surveys' }).click();
 
-  await expect(page.locator('body')).toContainText(/survey/i);
-}
-
-async function openSurvey(page, surveyUrl) {
-  await openAllSurveys(page);
-
-  await page.goto(surveyUrl);
-
-  await expect(page.locator('body')).toContainText(/survey|question|frontend|full stack|development|skills|test/i);
-}
-
-async function answerAvailableQuestions(page) {
-  const body = page.locator('body');
-
-  const radioInputs = page.locator('input[type="radio"]');
-  const radioCount = await radioInputs.count();
-
-  for (let i = 0; i < radioCount; i += 1) {
-    const radio = radioInputs.nth(i);
-
-    if (await radio.isVisible().catch(() => false)) {
-      await radio.check({ force: true }).catch(() => {});
-    }
+    await expect(page.locator('body')).toContainText(/survey/i);
   }
 
-  const checkboxInputs = page.locator('input[type="checkbox"]');
-  const checkboxCount = await checkboxInputs.count();
+  async function openSurvey(page, surveyUrl) {
+    await openAllSurveys(page);
 
-  for (let i = 0; i < checkboxCount; i += 1) {
-    const checkbox = checkboxInputs.nth(i);
+    await page.goto(surveyUrl);
 
-    if (await checkbox.isVisible().catch(() => false)) {
-      await checkbox.check({ force: true }).catch(() => {});
-    }
+    await expect(page.locator('body')).toContainText(/survey|question|test|feedback|development|skills/i);
   }
 
-  const textInputs = page.locator('input[type="text"], input[type="email"], input[type="number"], input[type="time"]');
-  const textInputCount = await textInputs.count();
+  async function getSubmitButton(page) {
+    return page
+      .getByRole('button', { name: /submit/i })
+      .or(page.locator('input[type="submit"]'))
+      .or(page.locator('button[type="submit"]'))
+      .first();
+  }
 
-  for (let i = 0; i < textInputCount; i += 1) {
-    const input = textInputs.nth(i);
+  async function submitSurvey(page) {
+    const submitButton = await getSubmitButton(page);
 
-    if (await input.isVisible().catch(() => false)) {
-      const type = await input.getAttribute('type');
+    await expect(submitButton).toBeVisible();
+    await submitButton.scrollIntoViewIfNeeded();
+    await submitButton.click();
+  }
 
-      if (type === 'email') {
-        await input.fill('jonathan.automation@test.com');
-      } else if (type === 'number') {
-        await input.fill('5');
-      } else if (type === 'time') {
-        await input.fill('14:29');
-      } else {
-        await input.fill('Automated feedback response');
+  async function answerAvailableQuestions(page) {
+    const radioInputs = page.locator('input[type="radio"]');
+    const radioCount = await radioInputs.count();
+
+    for (let i = 0; i < radioCount; i += 1) {
+      const radio = radioInputs.nth(i);
+
+      if (await radio.isVisible().catch(() => false)) {
+        await radio.check({ force: true }).catch(() => {});
       }
     }
-  }
 
-  const textareas = page.locator('textarea');
-  const textareaCount = await textareas.count();
+    const checkboxInputs = page.locator('input[type="checkbox"]');
+    const checkboxCount = await checkboxInputs.count();
 
-  for (let i = 0; i < textareaCount; i += 1) {
-    const textarea = textareas.nth(i);
+    for (let i = 0; i < checkboxCount; i += 1) {
+      const checkbox = checkboxInputs.nth(i);
 
-    if (await textarea.isVisible().catch(() => false)) {
-      await textarea.fill('This is an automated feedback response for the survey.');
+      if (await checkbox.isVisible().catch(() => false)) {
+        await checkbox.check({ force: true }).catch(() => {});
+      }
     }
-  }
 
-  const selects = page.locator('select');
-  const selectCount = await selects.count();
+    const textInputs = page.locator(
+      'input[type="text"], input[type="email"], input[type="number"], input[type="time"]'
+    );
+    const textInputCount = await textInputs.count();
 
-  for (let i = 0; i < selectCount; i += 1) {
-    const select = selects.nth(i);
+    for (let i = 0; i < textInputCount; i += 1) {
+      const input = textInputs.nth(i);
 
-    if (await select.isVisible().catch(() => false)) {
-      const options = select.locator('option');
-      const optionCount = await options.count();
+      if (await input.isVisible().catch(() => false)) {
+        const type = await input.getAttribute('type');
 
-      if (optionCount > 1) {
-        const value = await options.nth(1).getAttribute('value');
-        if (value) {
-          await select.selectOption(value);
+        if (type === 'email') {
+          await input.fill('jonathan.automation@test.com');
+        } else if (type === 'number') {
+          await input.fill('5');
+        } else if (type === 'time') {
+          await input.fill('14:29');
+        } else {
+          await input.fill('Automated feedback response');
         }
       }
     }
-  }
 
-  const sliders = page.getByRole('slider');
-  const sliderCount = await sliders.count();
+    const textareas = page.locator('textarea');
+    const textareaCount = await textareas.count();
 
-  for (let i = 0; i < sliderCount; i += 1) {
-    const slider = sliders.nth(i);
+    for (let i = 0; i < textareaCount; i += 1) {
+      const textarea = textareas.nth(i);
 
-    if (await slider.isVisible().catch(() => false)) {
-      await slider.fill('5').catch(async () => {
-        await slider.fill('50').catch(() => {});
-      });
+      if (await textarea.isVisible().catch(() => false)) {
+        await textarea.fill('This is an automated feedback response for the survey.');
+      }
+    }
+
+    const selects = page.locator('select');
+    const selectCount = await selects.count();
+
+    for (let i = 0; i < selectCount; i += 1) {
+      const select = selects.nth(i);
+
+      if (await select.isVisible().catch(() => false)) {
+        const options = select.locator('option');
+        const optionCount = await options.count();
+
+        if (optionCount > 1) {
+          const value = await options.nth(1).getAttribute('value');
+
+          if (value) {
+            await select.selectOption(value);
+          }
+        }
+      }
+    }
+
+    const sliders = page.getByRole('slider');
+    const sliderCount = await sliders.count();
+
+    for (let i = 0; i < sliderCount; i += 1) {
+      const slider = sliders.nth(i);
+
+      if (await slider.isVisible().catch(() => false)) {
+        await slider.fill('5').catch(async () => {
+          await slider.fill('50').catch(() => {});
+        });
+      }
     }
   }
 
-  await expect(body).toContainText(/submit|question|survey/i);
-}
+  test('Submit survey without required questions shows validation message', async ({ page }) => {
+    await openSurvey(page, NEW_SURVEY_URL);
 
-async function submitSurvey(page) {
-  const submitButton = page
-    .getByRole('button', { name: /submit/i })
-    .or(page.locator('input[type="submit"]'))
-    .or(page.locator('button[type="submit"]'));
+    await submitSurvey(page);
 
-  await submitButton.first().scrollIntoViewIfNeeded();
-  await submitButton.first().click();
-}
+    await expect(page.locator('body')).toContainText(
+      /required|obligatoire|please|field|answer|question|missing|error|must/i
+    );
+  });
 
-test('Submit survey without required questions shows validation message', async ({ page }) => {
-  await openSurvey(page, NEW_SURVEY_URL);
+  test('Logged-in student completes and submits a survey', async ({ page }) => {
+    await openSurvey(page, NEW_SURVEY_URL);
 
-  await submitSurvey(page);
+    await answerAvailableQuestions(page);
 
-  await expect(page.locator('body')).toContainText(
-    /required|obligatoire|please|field|answer|question|missing|error|must/i
-  );
-});
+    await submitSurvey(page);
 
-test('Logged-in student completes and submits a survey', async ({ page }) => {
-  await openSurvey(page, NEW_SURVEY_URL);
+    await expect(page.locator('body')).toContainText(
+      /Merci, vos réponses ont bien été enregistrées|thank you|submitted|recorded|success|responses/i
+    );
+  });
 
-  await answerAvailableQuestions(page);
+  test('Reopen already completed survey prevents duplicate submission', async ({ page }) => {
+    await openSurvey(page, COMPLETED_SURVEY_URL);
 
-  await submitSurvey(page);
+    await expect(page.locator('body')).toContainText(
+      /already responded|already completed|déjà|Merci, vos réponses ont bien été enregistrées|Thank you|responses have been recorded|réponses ont bien été enregistrées/i
+    );
 
-  await expect(page.locator('body')).toContainText(
-    /Merci, vos réponses ont bien été enregistrées|thank you|submitted|recorded|success|responses/i
-  );
-});
+    const submitButton = await getSubmitButton(page);
 
-test('Reopen already completed survey prevents duplicate submission', async ({ page }) => {
-  await openSurvey(page, COMPLETED_SURVEY_URL);
-
-  await expect(page.locator('body')).toContainText(
-    /already responded|already completed|déjà|Merci, vos réponses ont bien été enregistrées|Thank you|responses have been recorded/i
-  );
+    await expect(submitButton).not.toBeVisible();
+  });
 });
