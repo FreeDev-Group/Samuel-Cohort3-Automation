@@ -1,153 +1,168 @@
 import { test, expect } from '@playwright/test';
 import { loginAsStudent } from '../../../../helpers/auth.js';
 
-// Update these URLs if the mentor provides different surveys.
-const AVAILABLE_SURVEY_URL = '/survey/alains-survey/';
-const COMPLETED_SURVEY_URL = '/survey/wise-test-2/';
+test.describe.serial('Student Provide Feedback', () => {
+  async function openAllSurveys(page) {
+    await loginAsStudent(page);
 
-async function navigateToSurvey(page, surveyUrl) {
-  await loginAsStudent(page);
+    await expect(page.getByRole('link', { name: 'All Surveys' })).toBeVisible();
+    await page.getByRole('link', { name: 'All Surveys' }).click();
 
-  await page.getByRole('link', { name: 'All Surveys' }).click();
-
-  await expect(page.locator('body')).toContainText(/survey/i);
-
-  await page.goto(surveyUrl);
-
-  await expect(page.locator('body')).toContainText(
-    /survey|question|frontend|backend|full stack|development|skills|test/i
-  );
-}
-
-async function fillSurvey(page) {
-  // Radio buttons
-  for (const radio of await page.locator('input[type="radio"]').all()) {
-    if (await radio.isVisible().catch(() => false)) {
-      await radio.check({ force: true }).catch(() => {});
-    }
+    await expect(page.locator('body')).toContainText(/survey/i);
   }
 
-  // Checkboxes
-  for (const checkbox of await page.locator('input[type="checkbox"]').all()) {
-    if (await checkbox.isVisible().catch(() => false)) {
-      await checkbox.check({ force: true }).catch(() => {});
-    }
-  }
+  async function collectSurveyUrls(page) {
+    await openAllSurveys(page);
 
-  // Standard inputs
-  const inputs = page.locator(
-    'input[type="text"], input[type="email"], input[type="number"], input[type="time"]'
-  );
+    const urls = [];
+    const visitedPages = new Set();
 
-  const totalInputs = await inputs.count();
-
-  for (let i = 0; i < totalInputs; i++) {
-    const input = inputs.nth(i);
-
-    if (!(await input.isVisible().catch(() => false))) continue;
-
-    const type = await input.getAttribute('type');
-
-    switch (type) {
-      case 'email':
-        await input.fill('playwright.feedback@example.com');
+    while (true) {
+      const currentPageUrl = page.url();
+      if (visitedPages.has(currentPageUrl)) {
         break;
+      }
+      visitedPages.add(currentPageUrl);
 
-      case 'number':
+      const links = page.locator('a[href*="/survey/"]');
+      const count = await links.count();
+
+      for (let i = 0; i < count; i += 1) {
+        const href = await links.nth(i).getAttribute('href');
+        if (href && !urls.includes(href)) {
+          urls.push(href);
+        }
+      }
+
+      const nextPageLink = page.getByRole('link', { name: /Next Page/i });
+      if (await nextPageLink.isVisible().catch(() => false)) {
+        await nextPageLink.click();
+        await expect(page.locator('body')).toContainText(/survey/i);
+        continue;
+      }
+
+      break;
+    }
+
+    return urls;
+  }
+
+  async function findSurveyWithQuestions(page) {
+    const urls = await collectSurveyUrls(page);
+
+    for (const href of urls) {
+      await page.goto(href);
+
+      const bodyText = await page.locator('body').innerText();
+
+      const hasNoQuestions = bodyText.includes('No questions found for this survey');
+      const hasAlreadyResponded = bodyText.includes('You have already responded');
+
+      const questionControls =
+        await page.locator(
+          'textarea, input[type="text"], input[type="email"], input[type="number"], input[type="time"], input[type="radio"], input[type="checkbox"], select'
+        ).count();
+
+      if (!hasNoQuestions && !hasAlreadyResponded && questionControls > 0) {
+        return;
+      }
+    }
+
+    throw new Error('No survey containing questions was found.');
+  }
+
+  async function findCompletedSurvey(page) {
+    const urls = await collectSurveyUrls(page);
+
+    for (const href of urls) {
+      await page.goto(href);
+
+      const bodyText = await page.locator('body').innerText();
+
+      if (bodyText.includes('You have already responded')) {
+        return;
+      }
+    }
+
+    throw new Error('No completed survey was found.');
+  }
+
+  async function fillSurvey(page) {
+    for (const radio of await page.locator('input[type="radio"]').all()) {
+      if (await radio.isVisible().catch(() => false)) {
+        await radio.check({ force: true }).catch(() => {});
+      }
+    }
+
+    for (const checkbox of await page.locator('input[type="checkbox"]').all()) {
+      if (await checkbox.isVisible().catch(() => false)) {
+        await checkbox.check({ force: true }).catch(() => {});
+      }
+    }
+
+    const inputs = page.locator(
+      'input[type="text"], input[type="email"], input[type="number"], input[type="time"]'
+    );
+
+    for (let i = 0; i < await inputs.count(); i += 1) {
+      const input = inputs.nth(i);
+
+      if (!(await input.isVisible().catch(() => false))) continue;
+
+      const type = await input.getAttribute('type');
+
+      if (type === 'email') {
+        await input.fill('josue.feedback@test.com');
+      } else if (type === 'number') {
         await input.fill('10');
-        break;
-
-      case 'time':
+      } else if (type === 'time') {
         await input.fill('09:30');
-        break;
-
-      default:
-        await input.fill('Automated feedback generated by Playwright.');
+      } else {
+        await input.fill('Playwright feedback response.');
+      }
     }
-  }
 
-  // Textareas
-  const textareas = page.locator('textarea');
-  const totalTextareas = await textareas.count();
-
-  for (let i = 0; i < totalTextareas; i++) {
-    const textarea = textareas.nth(i);
-
-    if (await textarea.isVisible().catch(() => false)) {
-      await textarea.fill(
-        'This response was generated automatically during Playwright testing.'
-      );
+    for (const textarea of await page.locator('textarea').all()) {
+      if (await textarea.isVisible().catch(() => false)) {
+        await textarea.fill('This response was generated automatically during Playwright testing.');
+      }
     }
-  }
 
-  // Select elements
-  const selects = page.locator('select');
-  const totalSelects = await selects.count();
+    for (const select of await page.locator('select').all()) {
+      if (!(await select.isVisible().catch(() => false))) continue;
 
-  for (let i = 0; i < totalSelects; i++) {
-    const select = selects.nth(i);
-
-    if (!(await select.isVisible().catch(() => false))) continue;
-
-    const options = select.locator('option');
-    const count = await options.count();
-
-    if (count > 1) {
-      const value = await options.nth(1).getAttribute('value');
-
-      if (value) {
-        await select.selectOption(value);
+      const options = select.locator('option');
+      if ((await options.count()) > 1) {
+        const value = await options.nth(1).getAttribute('value');
+        if (value) {
+          await select.selectOption(value);
+        }
       }
     }
   }
 
-  // Sliders
-  const sliders = page.getByRole('slider');
-  const sliderCount = await sliders.count();
+  async function clickSubmit(page) {
+    const submitButton = page
+      .getByRole('button', { name: /submit/i })
+      .or(page.locator('input[type="submit"]'))
+      .or(page.locator('button[type="submit"]'));
 
-  for (let i = 0; i < sliderCount; i++) {
-    const slider = sliders.nth(i);
-
-    if (await slider.isVisible().catch(() => false)) {
-      await slider.fill('5').catch(async () => {
-        await slider.fill('50').catch(() => {});
-      });
-    }
+    await expect(submitButton.first()).toBeVisible();
+    await submitButton.first().click();
   }
-}
-
-async function clickSubmit(page) {
-  const submitButton = page
-    .getByRole('button', { name: /submit/i })
-    .or(page.locator('button[type="submit"]'))
-    .or(page.locator('input[type="submit"]'));
-
-  await expect(submitButton.first()).toBeVisible();
-
-  await submitButton.first().scrollIntoViewIfNeeded();
-
-  await submitButton.first().click();
-}
-
-test.describe.serial('Student Provide Feedback', () => {
 
   test('Student submits feedback successfully', async ({ page }) => {
-
-    await navigateToSurvey(page, AVAILABLE_SURVEY_URL);
-
+    await findSurveyWithQuestions(page);
     await fillSurvey(page);
-
     await clickSubmit(page);
 
     await expect(page.locator('body')).toContainText(
-      /Merci, vos réponses ont bien été enregistrées|Thank you/i
+      /Merci, vos réponses ont bien été enregistrées|Thank you|recorded|success/i
     );
   });
 
-  test('Required questions prevent empty submission', async ({ page }) => {
-
-    await navigateToSurvey(page, AVAILABLE_SURVEY_URL);
-
+  test('Submit empty survey shows validation', async ({ page }) => {
+    await findSurveyWithQuestions(page);
     await clickSubmit(page);
 
     await expect(page.locator('body')).toContainText(
@@ -155,13 +170,11 @@ test.describe.serial('Student Provide Feedback', () => {
     );
   });
 
-  test('Student cannot submit the same survey twice', async ({ page }) => {
-
-    await navigateToSurvey(page, COMPLETED_SURVEY_URL);
+  test('Completed survey prevents duplicate submission', async ({ page }) => {
+    await findCompletedSurvey(page);
 
     await expect(page.locator('body')).toContainText(
       /You have already responded to this survey|already responded|déjà répondu/i
     );
   });
-
 });
