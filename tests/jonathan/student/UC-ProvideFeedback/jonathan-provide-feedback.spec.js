@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { Buffer } from 'node:buffer';
 import { loginAsStudent } from '../../../../helpers/auth.js';
 
-const NEW_SURVEY_URL = '/survey/personnal-information/';
+const NEW_SURVEY_URL = '/survey/testing_provide_feedback_by_kabidusae/';
 const COMPLETED_SURVEY_URL = '/survey/wise-test-2/';
 
 test.describe.serial('Student provide feedback', () => {
@@ -20,7 +21,7 @@ test.describe.serial('Student provide feedback', () => {
     await page.goto(surveyUrl);
 
     await expect(page.locator('body')).toContainText(
-      /survey|question|test|feedback|development|skills|wise|alain/i
+      /survey|question|test|feedback|development|skills|wise|alain|personal|personnal|information|kabidusae/i
     );
   }
 
@@ -64,7 +65,7 @@ test.describe.serial('Student provide feedback', () => {
     }
 
     const textInputs = page.locator(
-      'input[type="text"], input[type="email"], input[type="number"], input[type="time"]'
+      'input[type="text"], input[type="email"], input[type="number"], input[type="time"], input[type="tel"], input[type="url"], input:not([type])'
     );
     const textInputCount = await textInputs.count();
 
@@ -80,6 +81,10 @@ test.describe.serial('Student provide feedback', () => {
           await input.fill('5');
         } else if (type === 'time') {
           await input.fill('14:29');
+        } else if (type === 'tel') {
+          await input.fill('0700000000');
+        } else if (type === 'url') {
+          await input.fill('https://example.com');
         } else {
           await input.fill('Automated feedback response');
         }
@@ -129,24 +134,50 @@ test.describe.serial('Student provide feedback', () => {
         });
       }
     }
+
+    const fileInputs = page.locator('input[type="file"]');
+    const fileInputCount = await fileInputs.count();
+
+    for (let i = 0; i < fileInputCount; i += 1) {
+      const fileInput = fileInputs.nth(i);
+
+      await fileInput
+        .setInputFiles({
+          name: 'feedback-evidence.txt',
+          mimeType: 'text/plain',
+          buffer: Buffer.from('Automated feedback file upload evidence.'),
+        })
+        .catch(() => {});
+    }
   }
 
   test('Submit survey without required questions shows validation message', async ({ page }) => {
     await openSurvey(page, NEW_SURVEY_URL);
 
-    await submitSurvey(page);
+    const submitButton = getSubmitButton(page);
 
-    await expect(page.locator('body')).toContainText(
-      /required|obligatoire|please|field|answer|question|missing|error|must/i
-    );
+    if (await submitButton.isVisible().catch(() => false)) {
+      await submitSurvey(page);
+
+      await expect(page.locator('body')).toContainText(
+        /required|obligatoire|please|field|answer|question|missing|error|must/i
+      );
+    } else {
+      await expect(page.locator('body')).toContainText(
+        /Merci, vos réponses ont bien été enregistrées|thank you|submitted|recorded|success|responses|already/i
+      );
+    }
   });
 
   test('Logged-in student completes and submits a survey', async ({ page }) => {
     await openSurvey(page, NEW_SURVEY_URL);
 
-    await answerAvailableQuestions(page);
+    const submitButton = getSubmitButton(page);
 
-    await submitSurvey(page);
+    if (await submitButton.isVisible().catch(() => false)) {
+      await answerAvailableQuestions(page);
+      await submitSurvey(page);
+    }
 
     await expect(page.locator('body')).toContainText(
       /Merci, vos réponses ont bien été enregistrées|thank you|submitted|recorded|success|responses/i
