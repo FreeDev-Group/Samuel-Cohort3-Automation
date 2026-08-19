@@ -33,15 +33,18 @@ npx playwright install
 
 ### 3. Set up your credentials (`.env`)
 
-Some tests need to log in as an existing student.  
+Some tests need to log in as an existing student or instructor.  
 >[!NOTE]
 > Credentials are **never** hardcoded, they are read from a local `.env` file that stays on your machine.
 
-Create a `.env` file in the project root with **your own** student account:
+Copy `.env.example` to `.env` and fill in **your own** accounts (student is required for most tests, instructor is only needed for `instructor/UC-*` tests):
 
 ```
 STUDENT_USER=your_own_username
 STUDENT_PASSWORD=your_own_password
+
+INSTRUCTOR_USER=your_own_instructor_username
+INSTRUCTOR_PASSWORD=your_own_instructor_password
 ```
 
 Then install dotenv (once):
@@ -137,8 +140,8 @@ Shared logic lives in `helpers/` and `fixtures/`.
 > To avoid duplicating code, reusable steps are centralized:
 > 
 > * **`helpers/cookies.js`** : : `dismissCookieBanner(page)` handles the cookie consent banner.
-> * **`helpers/auth.js`** : : `loginAsStudent(page)` logs in using credentials from the environment.
-> * **`fixtures/test-users.js`** : : exposes the test account, reading `STUDENT_USER` / `STUDENT_PASSWORD`.
+> * **`helpers/auth.js`** : : `loginAsStudent(page)` / `loginAsInstructor(page)` log in using credentials from the environment. Both roles share the same WordPress login form on the same site, they just use a different account.
+> * **`fixtures/test-users.js`** : : exposes `studentUser` (`STUDENT_USER` / `STUDENT_PASSWORD`) and `instructorUser` (`INSTRUCTOR_USER` / `INSTRUCTOR_PASSWORD`).
 
 Example usage in a spec:
 

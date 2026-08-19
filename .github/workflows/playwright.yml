@@ -29,6 +29,8 @@ jobs:
         env:
           STUDENT_USER: ${{ secrets.STUDENT_USER }}
           STUDENT_PASSWORD: ${{ secrets.STUDENT_PASSWORD }}
+          INSTRUCTOR_USER: ${{ secrets.INSTRUCTOR_USER }}
+          INSTRUCTOR_PASSWORD: ${{ secrets.INSTRUCTOR_PASSWORD }}
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
